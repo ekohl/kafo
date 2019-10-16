@@ -11,7 +11,7 @@ module Kafo
       describe "with defaults" do
         specify { assert_kind_of(String, pc.command) }
         specify { assert_includes(pc.command, 'puppet apply --modulepath /') }
-        specify { assert_includes(pc.command, 'kafo_configure::puppet_version_semver { "theforeman-kafo_configure":') }
+        specify { assert_includes(pc.command, 'include kafo_configure::version_checks') }
 
         specify { KafoConfigure.stub(:verbose, false) { assert_includes(pc.command, '$kafo_add_progress=true') } }
         specify { KafoConfigure.stub(:verbose, true) { assert_includes(pc.command, '$kafo_add_progress=false') } }
@@ -31,23 +31,10 @@ module Kafo
         end
       end
 
-      describe "with version checks" do
-        specify do
-          pc.stub(:modules_path, ['/modules']) do
-            Dir.stub(:[], ['./test/fixtures/metadata/basic.json']) do
-              assert_includes(pc.command, 'kafo_configure::puppet_version_semver { "theforeman-testing":')
-              assert_includes(pc.command, 'requirement => ">= 3.0.0 < 999.0.0"')
-            end
-          end
-        end
-
+      describe "without version checks" do
         specify do
           configuration.app[:skip_puppet_version_check] = true
-          pc.stub(:modules_path, ['/modules']) do
-            Dir.stub(:[], ['./test/fixtures/metadata/basic.json']) do
-              refute_includes(pc.command, 'kafo_configure::puppet_version')
-            end
-          end
+          refute_includes(pc.command, 'include kafo_configure::version_checks')
         end
       end
     end

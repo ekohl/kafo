@@ -47,7 +47,7 @@ module Kafo
       %{echo '
         $kafo_config_file="#{@configuration.config_file}"
         #{add_progress}
-        #{generate_version_checks.join("\n") if @puppet_version_check}
+        #{generate_version_checks if @puppet_version_check}
         #{@command}
       '}
     end
@@ -57,26 +57,7 @@ module Kafo
     end
 
     def generate_version_checks
-      checks = []
-      modules_path.each do |modulepath|
-        Dir[File.join(modulepath, '*', 'metadata.json')].sort.each do |metadata_json|
-          metadata = JSON.load(File.read(metadata_json))
-          next unless metadata['requirements'] && metadata['requirements'].is_a?(Array)
-
-          metadata['requirements'].select { |req| req['name'] == 'puppet' && req['version_requirement'] }.each do |req|
-            checks << versioncmp(metadata['name'], req['version_requirement'])
-          end
-        end
-      end
-      checks
-    end
-
-    def versioncmp(id, version_req)
-      <<-EOS
-        kafo_configure::puppet_version_semver { "#{id}":
-          requirement => "#{version_req}",
-        }
-      EOS
+      'include kafo_configure::version_checks'
     end
 
     def modules_path
