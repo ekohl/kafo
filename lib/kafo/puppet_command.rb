@@ -45,7 +45,6 @@ module Kafo
 
     def manifest
       %{echo '
-        $kafo_config_file="#{@configuration.config_file}"
         #{add_progress}
         #{generate_version_checks if @puppet_version_check}
         #{@command}
