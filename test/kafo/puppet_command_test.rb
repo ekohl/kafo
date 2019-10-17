@@ -1,33 +1,31 @@
 require 'test_helper'
 
 module Kafo
-  describe PuppetModule do
-    before do
-      KafoConfigure.config = Configuration.new(ConfigFileFactory.build('basic', BASIC_CONFIGURATION).path)
-    end
-
-    let(:pc) { PuppetCommand.new '' }
+  describe PuppetCommand do
+    let(:configuration) { Configuration.new(ConfigFileFactory.build('basic', BASIC_CONFIGURATION).path) }
+    let(:options) { [] }
+    let(:puppetconf) { nil }
+    let(:pc) { PuppetCommand.new('', options, puppetconf, configuration) }
 
     describe "#command" do
       describe "with defaults" do
-        specify { pc.command.must_be_kind_of String }
-        specify { pc.command.must_include 'puppet apply --modulepath /' }
-        specify { pc.command.must_include 'kafo_configure::puppet_version_semver { "theforeman-kafo_configure":' }
+        specify { assert_kind_of(String, pc.command) }
+        specify { assert_includes(pc.command, 'puppet apply --modulepath /') }
+        specify { assert_includes(pc.command, 'kafo_configure::puppet_version_semver { "theforeman-kafo_configure":') }
 
-        specify { KafoConfigure.stub(:verbose, false) { pc.command.must_include '$kafo_add_progress=true' } }
-        specify { KafoConfigure.stub(:verbose, true) { pc.command.must_include '$kafo_add_progress=false' } }
+        specify { KafoConfigure.stub(:verbose, false) { assert_includes(pc.command, '$kafo_add_progress=true') } }
+        specify { KafoConfigure.stub(:verbose, true) { assert_includes(pc.command, '$kafo_add_progress=false') } }
 
-        specify { PuppetCommand.stub(:search_puppet_path, '/opt/puppetlabs/bin/puppet') { pc.command.must_include '/opt/puppetlabs/bin/puppet apply' } }
+        specify { PuppetCommand.stub(:search_puppet_path, '/opt/puppetlabs/bin/puppet') { assert_includes(pc.command, '/opt/puppetlabs/bin/puppet apply') } }
       end
 
       describe "with PuppetConfigurer" do
         let(:puppetconf) { MiniTest::Mock.new }
-        let(:pc) { PuppetCommand.new '', [], puppetconf }
 
         specify do
           puppetconf.expect(:config_path, '/tmp/puppet.conf') do
             puppetconf.expect(:write_config, nil) do
-              pc.command.must_include ' --config=/tmp/puppet.conf '
+              assert_includes(pc.command, ' --config=/tmp/puppet.conf ')
             end
           end
         end
@@ -37,17 +35,17 @@ module Kafo
         specify do
           pc.stub(:modules_path, ['/modules']) do
             Dir.stub(:[], ['./test/fixtures/metadata/basic.json']) do
-              pc.command.must_include 'kafo_configure::puppet_version_semver { "theforeman-testing":'
-              pc.command.must_include 'requirement => ">= 3.0.0 < 999.0.0"'
+              assert_includes(pc.command, 'kafo_configure::puppet_version_semver { "theforeman-testing":')
+              assert_includes(pc.command, 'requirement => ">= 3.0.0 < 999.0.0"')
             end
           end
         end
 
         specify do
-          KafoConfigure.config.app[:skip_puppet_version_check] = true
+          configuration.app[:skip_puppet_version_check] = true
           pc.stub(:modules_path, ['/modules']) do
             Dir.stub(:[], ['./test/fixtures/metadata/basic.json']) do
-              pc.command.wont_include 'kafo_configure::puppet_version'
+              refute_includes(pc.command, 'kafo_configure::puppet_version')
             end
           end
         end
@@ -61,7 +59,7 @@ module Kafo
         specify do
           ::ENV.stub(:[], '/usr/bin:/usr/local/bin') do
             File.stub(:executable?, Proc.new { |path| path == '/usr/local/bin/puppet' }) do
-              pc.must_equal '/usr/local/bin/puppet'
+              assert_equal('/usr/local/bin/puppet', pc)
             end
           end
         end
@@ -71,14 +69,14 @@ module Kafo
         specify do
           ::ENV.stub(:[], '/usr/bin:/usr/local/bin') do
             File.stub(:executable?, Proc.new { |path| path == '/opt/puppetlabs/bin/puppet' }) do
-              pc.must_equal '/opt/puppetlabs/bin/puppet'
+              assert_equal('/opt/puppetlabs/bin/puppet', pc)
             end
           end
         end
       end
 
       describe "with no 'puppet' found in PATH" do
-        specify { File.stub(:executable?, false) { pc.must_equal 'puppet' } }
+        specify { File.stub(:executable?, false) { assert_equal('puppet', pc) } }
       end
     end
   end
