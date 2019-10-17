@@ -2,39 +2,36 @@ require 'test_helper'
 
 module Kafo
   describe PuppetCommand do
-    let(:configuration) { Configuration.new(ConfigFileFactory.build('basic', BASIC_CONFIGURATION).path) }
-    let(:options) { [] }
-    let(:puppetconf) { nil }
-    let(:pc) { PuppetCommand.new('', options, puppetconf, configuration) }
+    describe ".build_command" do
+      let(:command) { '' }
+      let(:options) { [] }
+      let(:configuration) { Configuration.new(ConfigFileFactory.build('basic', BASIC_CONFIGURATION).path) }
+      subject { PuppetCommand.build_command(command, configuration, options) }
 
-    describe "#command" do
-      describe "with defaults" do
-        specify { assert_kind_of(String, pc.command) }
-        specify { assert_includes(pc.command, 'puppet apply --modulepath /') }
-        specify { assert_includes(pc.command, 'include kafo_configure::version_checks') }
+      specify { assert_kind_of(String, subject) }
+      specify { assert_includes(subject, 'kafo_configure::version_checks') }
+      specify { assert_includes(subject, 'puppet apply') }
 
-        specify { KafoConfigure.stub(:verbose, false) { assert_includes(pc.command, '$kafo_add_progress=true') } }
-        specify { KafoConfigure.stub(:verbose, true) { assert_includes(pc.command, '$kafo_add_progress=false') } }
+      specify { KafoConfigure.stub(:verbose, false) { assert_includes(subject, '$kafo_add_progress=true') } }
+      specify { KafoConfigure.stub(:verbose, true) { assert_includes(subject, '$kafo_add_progress=false') } }
 
-        specify { PuppetCommand.stub(:search_puppet_path, '/opt/puppetlabs/bin/puppet') { assert_includes(pc.command, '/opt/puppetlabs/bin/puppet apply') } }
+      specify do
+        PuppetCommand.stub(:search_puppet_path, '/opt/puppetlabs/bin/puppet') do
+          assert_includes(subject, '/opt/puppetlabs/bin/puppet apply')
+        end
       end
 
-      describe "with PuppetConfigurer" do
-        let(:puppetconf) { MiniTest::Mock.new }
-
+      describe 'with options' do
+        let(:options) { ['--config=/tmp/kafo/puppet.conf'] }
         specify do
-          puppetconf.expect(:config_path, '/tmp/puppet.conf') do
-            puppetconf.expect(:write_config, nil) do
-              assert_includes(pc.command, ' --config=/tmp/puppet.conf ')
-            end
-          end
+          assert_includes(subject, 'puppet apply --config=/tmp/kafo/puppet.conf')
         end
       end
 
       describe "without version checks" do
         specify do
           configuration.app[:skip_puppet_version_check] = true
-          refute_includes(pc.command, 'include kafo_configure::version_checks')
+          refute_includes(subject, 'kafo_configure::puppet_version')
         end
       end
     end

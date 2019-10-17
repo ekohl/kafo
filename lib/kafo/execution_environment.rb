@@ -34,15 +34,30 @@ module Kafo
       hiera_config = configure_hiera
 
       settings = {
+        'basemodulepath' => modules_path.join(':'),
         'environmentpath' => environmentpath,
         'factpath'        => factpath,
         'hiera_config'    => hiera_config,
       }.merge(settings)
 
-      PuppetConfigurer.new(puppet_conf, settings)
+      configurer = PuppetConfigurer.new(puppet_conf, settings)
+      configurer.write_config
+      configurer
+    end
+
+    def puppet_command(command, options = [], silent = false)
+      options << "--config=#{puppet_conf}"
+      suffix = silent ? '2>&1' : nil
+      result = PuppetCommand.build_command(command, @config, options, suffix)
+      @logger.debug result
+      result
     end
 
     private
+
+    def modules_path
+      [@config.module_dirs, @config.kafo_modules_dir].flatten
+    end
 
     def environmentpath
       File.join(directory, 'environments')

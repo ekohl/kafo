@@ -427,7 +427,7 @@ module Kafo
       self.class.exit_handler.register_cleanup_path(execution_env.directory)
 
       execution_env.store_answers
-      puppetconf = execution_env.configure_puppet(
+      execution_env.configure_puppet(
         'color'     => false,
         'evaltrace' => !!@progressbar,
         'noop'      => !!noop?,
@@ -444,7 +444,7 @@ module Kafo
           '--detailed-exitcodes',
       ]
       begin
-        command = PuppetCommand.new('include kafo_configure', options, puppetconf).command
+        command = execution_env.puppet_command('include kafo_configure', options)
         log_parser = PuppetLogParser.new
         PTY.spawn(command) do |stdin, stdout, pid|
           begin

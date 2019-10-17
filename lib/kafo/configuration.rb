@@ -165,7 +165,7 @@ module Kafo
         execution_env = ExecutionEnvironment.new(self)
         KafoConfigure.exit_handler.register_cleanup_path(execution_env.directory)
 
-        puppetconf = execution_env.configure_puppet('noop' => true)
+        execution_env.configure_puppet('noop' => true)
 
         dump_manifest = <<EOS
           #{includes}
@@ -176,7 +176,7 @@ module Kafo
 EOS
 
         @logger.info 'Loading default values from puppet modules...'
-        command = PuppetCommand.new(dump_manifest, [], puppetconf, self).append('2>&1').command
+        command = execution_env.puppet_command(dump_manifest, [], true)
         result = `#{command}`
         @logger.debug result
         unless $?.exitstatus == 0
