@@ -9,7 +9,6 @@ module Kafo
             #{command}
           '},
           '|',
-          "RUBYLIB=#{[configuration.kafo_modules_dir, ::ENV['RUBYLIB']].join(File::PATH_SEPARATOR)}",
           "#{search_puppet_path('puppet')} apply #{options.join(' ')} #{suffix}",
       ].join(' ')
     end
