@@ -38,11 +38,11 @@ module Kafo
         'environmentpath' => environmentpath,
         'factpath'        => factpath,
         'hiera_config'    => hiera_config,
+        'reports'         => '',
       }.merge(settings)
 
-      configurer = PuppetConfigurer.new(puppet_conf, settings)
-      configurer.write_config
-      configurer
+      @logger.debug("Writing Puppet config file at #{puppet_conf}")
+      PuppetConfigurer.write_config(puppet_conf, settings)
     end
 
     def puppet_command(command, options = [], silent = false)
