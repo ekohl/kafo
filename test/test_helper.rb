@@ -6,6 +6,7 @@ require 'minitest/autorun'
 require 'minitest/spec'
 require 'minitest/mock'
 require "minitest/reporters"
+require 'mocha/minitest'
 Minitest::Reporters.use!
 
 require 'manifest_file_factory'
