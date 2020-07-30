@@ -70,14 +70,11 @@ module Kafo
       describe "with 'puppet' in PATH as symlink" do
         specify do
           ::ENV.stub(:[], '/usr/bin:/usr/local/bin') do
-            File.stubs(:executable?).with('/usr/bin/puppet').returns(false)
-            File.stubs(:executable?).with('/usr/local/bin/puppet').returns(false)
-            File.stubs(:executable?).with('/opt/puppetlabs/bin/puppet').returns(true)
-            File.stubs(:symlink?).with('/usr/bin/puppet').returns(true)
-            File.stubs(:symlink?).with('/usr/local/bin/puppet').returns(true)
-            File.stubs(:symlink?).with('/opt/puppetlabs/bin/puppet').returns(false)
-
-            _(pc).must_equal '/opt/puppetlabs/bin/puppet'
+            File.stub(:executable?, Proc.new { |path| path == '/opt/puppetlabs/bin/puppet' }) do
+              File.stub(:symlink?, Proc.new { |path| ['/usr/bin/puppet', '/usr/local/bin/puppet'].include?(path) }) do
+                _(pc).must_equal '/opt/puppetlabs/bin/puppet'
+              end
+            end
           end
         end
       end
@@ -85,12 +82,11 @@ module Kafo
       describe "with AIO 'puppet' only" do
         specify do
           ::ENV.stub(:[], '/usr/bin:/usr/local/bin') do
-            File.stubs(:executable?).with('/usr/bin/puppet').returns(false)
-            File.stubs(:executable?).with('/usr/local/bin/puppet').returns(false)
-            File.stubs(:executable?).with('/opt/puppetlabs/bin/puppet').returns(true)
-            File.stubs(:symlink?).returns(false)
-
-            _(pc).must_equal '/opt/puppetlabs/bin/puppet'
+            File.stub(:executable?, Proc.new { |path| path == '/opt/puppetlabs/bin/puppet' }) do
+              File.stub(:symlink?, false) do
+                _(pc).must_equal '/opt/puppetlabs/bin/puppet'
+              end
+            end
           end
         end
       end
